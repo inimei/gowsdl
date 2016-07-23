@@ -242,6 +242,7 @@ func (g *GoWSDL) genTypes() ([]byte, error) {
 		"makePublic":           g.makePublicFn,
 		"comment":              comment,
 		"removeNS":             removeNS,
+		"isTnsType":            g.isTnsType,
 	}
 
 	//TODO resolve element refs in place.
@@ -255,6 +256,30 @@ func (g *GoWSDL) genTypes() ([]byte, error) {
 	}
 
 	return data.Bytes(), nil
+}
+
+func (g *GoWSDL) isTnsType(name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+
+	if strings.HasPrefix(name, "tns:") {
+		name = strings.TrimPrefix(name, "tns:")
+	}
+
+	for _, schema := range g.wsdl.Types.Schemas {
+		if schema.ComplexTypes == nil {
+			continue
+		}
+
+		for _, cType := range schema.ComplexTypes {
+			if cType.Name == name {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (g *GoWSDL) genOperations() ([]byte, error) {

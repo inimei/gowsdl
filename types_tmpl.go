@@ -64,13 +64,18 @@ var typesTmpl = `
 		{{if ne .Ref ""}}
 			{{removeNS .Ref | replaceReservedWords  | makePublic}} {{if eq .MaxOccurs "unbounded"}}[]{{end}}{{.Ref | toGoType}} ` + "`" + `xml:"{{.Ref | removeNS}},omitempty"` + "`" + `
 		{{else}}
-		{{if not .Type}}
-			{{template "ComplexTypeInline" .}}
-		{{else}}
-			{{if .Doc}}
-				{{.Doc | comment}} {{"\n"}}
+			{{if not .Type}}
+				{{template "ComplexTypeInline" .}}
+			{{else}}
+				{{if .Doc}}
+					{{.Doc | comment}} {{"\n"}}
+				{{end}}
+				{{if isTnsType .Type }}
+					{{replaceReservedWords .Name | makePublic}} {{if eq .MaxOccurs "unbounded"}}[]{{end}}{{.Type | toGoType}}Value ` + "`" + `xml:"{{.Name}},omitempty"` + "`" + ` 
+				{{else}}
+					{{replaceReservedWords .Name | makePublic}} {{if eq .MaxOccurs "unbounded"}}[]{{end}}{{.Type | toGoType}} ` + "`" + `xml:"{{.Name}},omitempty"` + "`" + ` 
+				{{end}}
 			{{end}}
-			{{replaceReservedWords .Name | makePublic}} {{if eq .MaxOccurs "unbounded"}}[]{{end}}{{.Type | toGoType}} ` + "`" + `xml:"{{.Name}},omitempty"` + "`" + ` {{end}}
 		{{end}}
 	{{end}}
 {{end}}
@@ -108,8 +113,7 @@ var typesTmpl = `
 	{{range .ComplexTypes}}
 		{{/* ComplexTypeGlobal */}}
 		{{$name := replaceReservedWords .Name | makePublic}}
-		type {{$name}} struct {
-			XMLName xml.Name ` + "`xml:\"{{$targetNamespace}} {{.Name}}\"`" + `
+		type {{$name}}Value struct {
 			{{if ne .ComplexContent.Extension.Base ""}}
 				{{template "ComplexContent" .ComplexContent}}
 			{{else if ne .SimpleContent.Extension.Base ""}}
@@ -121,6 +125,11 @@ var typesTmpl = `
 				{{template "Elements" .All}}
 				{{template "Attributes" .Attributes}}
 			{{end}}
+		}
+		type {{$name}} struct {
+			XMLName xml.Name ` + "`xml:\"{{$targetNamespace}} {{.Name}}\"`" + `
+
+			{{$name}}Value
 		}
 	{{end}}
 {{end}}
