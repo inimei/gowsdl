@@ -28,9 +28,9 @@ var opsTmpl = `
 
 	{{range .Operations}}
 		{{$faults := len .Faults}}
-		{{$requestType := findType .Input.Message | replaceReservedWords | makePublic}}
+		{{$requestType := findType .Input.Message | replaceReservedWords | makeTypePublic}}
 		{{$soapAction := findSOAPAction .Name $portType}}
-		{{$responseType := findType .Output.Message | replaceReservedWords | makePublic}}
+		{{$responseType := findType .Output.Message | replaceReservedWords | makeTypePublic}}
 
 		{{/*if ne $soapAction ""*/}}
 		{{if gt $faults 0}}

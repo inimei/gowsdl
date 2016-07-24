@@ -31,6 +31,7 @@ type GoWSDL struct {
 	file, pkg             string
 	ignoreTLS             bool
 	makePublicFn          func(string) string
+	makeTypePublicFn      func(string) string
 	wsdl                  *WSDL
 	resolvedXSDExternals  map[string]bool
 	currentRecursionLevel uint8
@@ -86,16 +87,20 @@ func NewGoWSDL(file, pkg string, ignoreTLS bool, exportAllTypes bool) (*GoWSDL, 
 	if pkg == "" {
 		pkg = "myservice"
 	}
+
 	makePublicFn := func(id string) string { return id }
+	makeTypePublicFn := makePublicFn
 	if exportAllTypes {
 		makePublicFn = makePublic
+		makeTypePublicFn = makeTypePublic
 	}
 
 	return &GoWSDL{
-		file:         file,
-		pkg:          pkg,
-		ignoreTLS:    ignoreTLS,
-		makePublicFn: makePublicFn,
+		file:             file,
+		pkg:              pkg,
+		ignoreTLS:        ignoreTLS,
+		makePublicFn:     makePublicFn,
+		makeTypePublicFn: makeTypePublicFn,
 	}, nil
 }
 
@@ -288,6 +293,7 @@ func (g *GoWSDL) genOperations() ([]byte, error) {
 		"stripns":              stripns,
 		"replaceReservedWords": replaceReservedWords,
 		"makePublic":           g.makePublicFn,
+		"makeTypePublic":       g.makeTypePublicFn,
 		"findType":             g.findType,
 		"findSOAPAction":       g.findSOAPAction,
 		"findServiceAddress":   g.findServiceAddress,
@@ -518,6 +524,19 @@ func stripns(xsdType string) string {
 	}
 
 	return t
+}
+
+var innerTypes = map[string]bool{
+	"string": true,
+}
+
+func makeTypePublic(identifier string) string {
+
+	if _, ok := innerTypes[identifier]; ok {
+		return identifier
+	}
+
+	return makePublic(identifier)
 }
 
 func makePublic(identifier string) string {
